@@ -1,0 +1,224 @@
+
+    # # return HttpResponse("Simple String Hello World")
+    # context = {"name":"Kamran"}
+    # # return render(request, 'hello.html', context)
+    # x = 1
+    # y = 1
+
+    # ####################################################################
+    # Query_set = Product.objects.all()  # it returns query_set not actually call data from DB
+    # # Following mehtods returns the original data from DB
+    # # Method 1
+    # for product in Query_set:  
+    #     print(product)
+    # # Method 2
+    # products = Query_set[0:5]
+    # # Method 1
+    # products = list(Query_set)
+    # ####################################################################
+
+
+    # ####################################################################
+    # product = Product.objects.get(id=1) # it returns product not query_set
+    # product = Product.objects.get(pk=1) # pk is special filter, like you can have any column as primary key not particulary id 
+    # try:
+    #     product = Product.objects.get(pk=0) # we are using exception because if product do not exists it will raise exception
+    # except ObjectDoesNotExist:
+    #     pass
+    # like above following two will not raise exception but return NONE
+    # product = Product.objects.filter(pk=1).exists()
+    # product = Product.objects.filter(pk=1).first()
+    # ####################################################################
+
+
+    # ####################################################################
+    #                                  key=value
+    # Query_set = Product.objects.filter(unit_price=20) # here we are using column unit_price, but we can also use other column
+    # Query_set = Product.objects.filter(unit_price__gte=20)  # here unit_price is column and __gte is field lookup
+    # you can view many other field lookups related to string, integres and other data types on Django website
+    # Query_set = Product.objects.filter(unit_price__range=(20, 30))  # here unit_price is column and __range is field lookup for min 20 and max 30
+    # Query_set = Product.objects.filter(collection__id__range=(1, 2, 3))  # here collection is column and __id and __range are field lookups
+    # above __id will get all collections which have id 1, 2 or 3, and then will return those products containing that collection
+    # Query_set = Product.objects.filter(title__contains="coffer")  # here title is column and __contains is field lookup which is case_sensitive
+    # Query_set = Product.objects.filter(title__icontains="coffer")  # here title is column and __icontains is field lookup which is NOT case_sensitive
+    # like above we also have __startswith, __istartswith, __endswith, __iendswith
+    # Query_set = Product.objects.filter(last_update__year=2021)  # here last_update is column and __year is field lookup similarly  we have month, minute, second
+    # Query_set = Product.objects.filter(description__isnull=True)  # here description is column and __isnull is field lookup 
+    # ####################################################################
+
+
+    # ####################################################################
+    # Products inventory <= 10 AND price < 20
+    # Query_set = Product.objects.filter(inventory__lte=10).filter(unit_price__lt=20)   # METHOD 1
+    # Query_set = Product.objects.filter(inventory__lte=10, unit_price__lt=20)          # METHOD 2
+    # Query_set = Product.objects.filter(Q(inventory__lte=10) & Q(unit_price__lt=20))   # METHOD 3
+
+    # Products inventory <= 10 OR price < 20   # for this import Q from django.db.models
+    # product = Product.objects.filter(Q(inventory__lte=10) | Q(unit_price__lt=20))       
+
+    # Products inventory !<= 10 OR price !< 20 
+    # Query_set = Product.objects.filter(~Q(inventory__lte=10) | ~Q(unit_price__lt=20))         
+    # ####################################################################
+
+
+    # ####################################################################
+    # Products inventory = unit_price    # for this import Q from django.db.models  # referencing field
+    # Query_set = Product.objects.filter(inventory=F("unit_price"))
+    # ####################################################################
+
+    # ####################################################################
+    # Query_set = Product.objects.order_by("title")  # ASCENDING order
+    # Query_set = Product.objects.order_by("-title")  # DESCENDING order
+    # Query_set = Product.objects.order_by("unit_price","-title").reverse()
+    # Query_set = Product.objects.filter(collection__id=1).order_by("unit_price")
+    # Query_set = Product.objects.order_by("unit_price")
+    # product = Product.objects.order_by("unit_price")[0]  # this will give first product
+    # product = Product.objects.earliest("unit_price")     # this is same as above and return first product not query_set
+    # product = Product.objects.latest("unit_price")     # this is same as above and return last product not query_set
+    # ####################################################################
+
+    # ####################################################################
+    # start = 0
+    # end = 5
+    # products = Product.objects.all()[start:end]         # it will return only these products
+    # ####################################################################
+
+    # ####################################################################
+    # Query_set = Product.objects.values("id", "title")   # it will return only id and title column (in dictionary objects form)
+    # Query_set = Product.objects.values("id", "title", "collection__title")   # it will return only id and title column along with title of related collection
+    # ############################# -----------> EXERCISE
+    # select products that have been ordered and sort them by title
+    # Query_set = OrderItem.objects.values("products__id")  # it will return id of all products
+    # Query_set = OrderItem.objects.values("products__id").distinct()  # it will return id of all products without repeat
+    # Products_Query_Set = Product.objects.filter(id__in=Query_set)   # it will return only those products
+    # ####################################################################
+
+    # ####################################################################
+    # Query_set = Product.objects.only("id", "title")   # it will return only id and title column (in Product objects form)
+    # Query_set = Product.objects.defer("description")   # it will return all Column exept description column (in Product objects form)
+    ##### be carefull while calling above two Queries because if you use that column like unit_price in first case which you have not 
+    # mentioned, You will end up having a lot Queries for all those Products to get unit_price 
+    # ####################################################################
+
+    # ####################################################################
+    # -----------------> select_related for one-to-one
+    # Query_set = Product.objects.select_related("collection").all()  # to fetch the collection table columns (already) because if you
+    ##### just Query Products like Product.objects.all() then use collection related Column, you will end up having a lot Queries
+    # -----------------> prefetch_related for many-to-many
+    # Query_set = Product.objects.prefetch_related("promotions").all()
+    # Query_set = Product.objects.prefetch_related("promotions").select_related("collection").all()   # to use both
+    # ############################# -----------> EXERCISE
+    # get last 5 orders with their Customers and items (included Products)
+    # QuerySet = Order.objects.select_related("customer").prefetch_related("orderitem_set__product").order_by("-placed_at")[:5]
+    # ####################################################################
+
+    # ####################################################################
+    # result = Product.objects.aggregate(count=Count("id"))  # it will return total number of products
+    # result = Product.objects.aggregate(count=Count("description"))  # it will return total number of products which have none NULL products description
+    # result = Product.objects.aggregate(count=Count("id"), min_price=Min("unit_price"), max_price=Max("unit_price"))
+    # result = Product.objects.filter(collection__id=1).aggregate(count=Count("id"), min_price=Min("unit_price"), max_price=Max("unit_price"))
+    # above Query will count for only Particular Collection of Products
+    # ####################################################################
+
+    # ####################################################################
+    # Query_Set = Customer.objects.annotate(new_id=Value(True))  # this will create new column named new_id with all filling with 1
+    # Query_Set = Customer.objects.annotate(new_id_2=F("id"))    # this will create new column named new_id_2 with all filling with its own column values that is 'id'
+    # Query_Set = Customer.objects.annotate(new_id_3=F("id")+1)  # this will create new column named new_id_3 with all filling with its own column values that is 'id' adding 1 to it
+    # ####################################################################
+
+    # ####################################################################
+    # Query_Set = Customer.objects.annotate(full_name=Func(F("first_name"), Value(" "), F("last_name"), function="CONCAT"))
+    # Query_Set = Customer.objects.annotate(full_name=Concat("first_name", Value(" "), "last_name")
+    # GO to Functions in DB in DJANGO SITE
+    # ####################################################################
+
+    # ####################################################################
+    # Query_Set = Customer.objects.annotate(orders_count=Count("order"))  # here we cannot use order_set
+    # ####################################################################
+
+    # ####################################################################
+    # result = Product.objects.annotate(discounted_price=F("unit_price")*0.8)  # this will not workso we use following
+    # ExpressionWrapper
+    # discounted_price = ExpressionWrapper(F("unit_price")*0.8, output_field=DecimalField())
+    # result = Product.objects.annotate(discounted_price=discounted_price)  
+    # ####################################################################
+
+    # ####################################################################
+    # content_type = ContentType.objects.get_for_model(Product)
+    # Query_Set = TaggedItem.objects.select_related("tag").filter(content_type=content_type, object_id=1)
+    # following is custom manager
+    # Query_Set = TaggedItem.objects.get_tags_for(Product, obj_id=1)
+    # ####################################################################
+
+    # ####################################################################
+    # query_set = Product.objects.all()
+    # list(query_set)   # first time Django will call this Query 
+    # list(query_set)   # next time it will not Query this again but will take data from Query_Chached memory
+    # ####################################################################
+
+    # ####################################################################
+    # CREATING NEW COLLECTIONS
+    # METHOD 1   ----> this is preferred approach
+    # collection = Collection()
+    # collection.title = "Video Games"
+    # collection.featured_product = Product(pk=1)  # Product(id=1)  # collection.featured_product_id = 1
+    # collection.save()
+    # METHOD 2
+    # collection = Collection.objects.create(title="Video Games", featured_product_id=12)
+    # ####################################################################
+
+    # ####################################################################
+    # UPDATING PREVIOUS COLLECTIONS
+    # METHOD 1
+    # collection = Collection(pk=4)
+    # collection.title = "Updated Video Games"
+    # collection.featured_product = None
+    # collection.save()
+    # METHOD 2
+    # collection = Collection.objects.filter(pk=4).update(title="Updated Video Games", featured_product_id=None)
+    ###### becareful while updaing like 
+    ##### if you update only one field like only title the other all fields will automatically set to None or Null 
+    # ####################################################################
+
+    # ####################################################################
+    # DELETING COLLECTIONS
+    # METHOD 1
+    # collection = Collection(pk=4)
+    # collection.delete()
+    # METHOD 2
+    # Collection.objects.filter(pk__gt=4).delete() # it will delete all collections that have Primary Keys greater than 4
+    # ####################################################################
+
+    # ####################################################################
+    # with transaction.atomic():
+    #     order = Order()
+    #     order.customer_id = 1 # order.customer = Customer(pk=1)
+    #     order.save()
+    #     item = OrderItem()
+    #     item.order = order
+    #     item.product_id = 1
+    #     item.quantity = 2
+    #     item.unit_price = 20
+    #     item.save()
+    ##### now there are two operations that are happening, they both must be completed or none should be completed 
+    ##### so we will use transactions and wrap them in  
+    # ####################################################################
+
+    # ####################################################################
+    # quert_set = Product.objects.raw("SELECT * FROM store_products")
+    # quert_set = Product.objects.raw("SELECT id, title, unit_price FROM store_products")
+    # cursor = connection.cursor()
+    # cursor.execute()
+    # cursor.close()  # you must have to close the cursor, you can also use following approach
+    # with connection.cursor() as cursor:
+        # cursor.execute()   # use this or following
+        # cursor.callproc("get_cutomers", [1, 4, 7])
+    # ####################################################################
+
+
+user1
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjM1MDc5MDcyLCJqdGkiOiJiZDZhNGQwZDU5NTk0MGFhYjI2MGNkNjllNWE4ZjdmYiIsInVzZXJfaWQiOjJ9.xq-0LA_UtlYoL_T8s1HJ8eudcqigi0-jfvwVaeBDoI0
+
+
+user2
+eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJ0b2tlbl90eXBlIjoiYWNjZXNzIiwiZXhwIjoxNjM1MDg3NTM1LCJqdGkiOiI2ZWFhNGU2YzhkY2E0M2UxOWJkOWQ0NGRhNjJkZjkwMiIsInVzZXJfaWQiOjN9.tCOKKIwoRtLk7-aQdRwTQldIaPlBFTevRdZKhneFZdY
